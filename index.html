@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動物病院 受付システム - v2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic UI', 'Meiryo UI', sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* メニュー選択画面 */
+        .menu-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .menu-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .menu-subtitle {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        .menu-buttons {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 30px;
+            padding: 60px 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-align: center;
+            min-width: 350px;
+            border: 3px solid transparent;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+        }
+
+        .menu-card.reception {
+            border-color: #4a90e2;
+        }
+
+        .menu-card.reception:hover {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .menu-card.staff {
+            border-color: #764ba2;
+        }
+
+        .menu-card.staff:hover {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        }
+
+        .menu-icon {
+            font-size: 6rem;
+            margin-bottom: 30px;
+        }
+
+        .menu-card-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .menu-card.reception .menu-card-title {
+            color: #4a90e2;
+        }
+
+        .menu-card.staff .menu-card-title {
+            color: #764ba2;
+        }
+
+        .menu-card-desc {
+            font-size: 1.2rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 受付画面・管理画面は非表示 */
+        .reception-screen,
+        .staff-screen {
+            display: none;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(200, 200, 200, 0.3);
+            color: #999;
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0.4;
+        }
+
+        .back-button:hover {
+            background: rgba(220, 220, 220, 0.6);
+            opacity: 0.8;
+        }
+
+        /* 受付画面のスタイル */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 35px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 5px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .time-slot {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .time-slot:hover {
+            background: #e3f2fd;
+            border-color: #4a90e2;
+        }
+
+        .time-slot.selected {
+            background: #4a90e2;
+            color: white;
+            border-color: #357abd;
+        }
+
+        .session-label {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #4a90e2;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .card-number-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .card-btn {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .card-btn:hover {
+            background: #e3f2fd;
+            border-color: #4a90e2;
+        }
+
+        .card-btn.selected {
+            background: #4a90e2;
+            color: white;
+            border-color: #357abd;
+        }
+
+        .card-input {
+            margin-top: 10px;
+        }
+
+        .no-reservation-btn {
+            background: #ff9800;
+            color: white;
+            border: 2px solid #f57c00;
+            font-size: 1.2rem;
+            max-width: 300px;
+            margin: 30px auto 0;
+        }
+
+        .no-reservation-btn:hover {
+            background: #f57c00;
+            border-color: #ef6c00;
+        }
+
+        .no-reservation-btn.selected {
+            background: #ef6c00;
+            border-color: #e65100;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 25px 50px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        .success-message-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        /* スタッフ画面のスタイル */
+        .staff-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .staff-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .staff-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-refresh {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .filters {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .filter-group select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #667eea;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.95rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-morning {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-afternoon {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge-no-reservation {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-insurance-yes {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-insurance-no {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-card {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .delete-btn:hover {
+            background: #229954;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 2rem;
+            }
+
+            .menu-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .menu-buttons {
+                gap: 20px;
+            }
+
+            .menu-card {
+                min-width: 280px;
+                padding: 40px 30px;
+            }
+
+            .menu-icon {
+                font-size: 4rem;
+            }
+
+            .menu-card-title {
+                font-size: 1.5rem;
+            }
+
+            .container, .staff-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .form-container {
+                padding: 25px;
+            }
+            
+            .header h1, .staff-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            }
+            
+            .card-buttons {
+                flex-direction: column;
+            }
+            
+            .card-btn {
+                min-width: auto;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .filters {
+                padding: 15px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- メニュー選択画面 -->
+    <div class="menu-screen" id="menuScreen">
+        <div class="menu-title">🐾 動物病院受付システム</div>
+        <div class="menu-subtitle">ご利用の画面を選択してください</div>
+        <div class="menu-buttons">
+            <div class="menu-card reception" onclick="showReceptionScreen()">
+                <div class="menu-icon">👥</div>
+                <div class="menu-card-title">受付画面</div>
+                <div class="menu-card-desc">
+                    飼い主様が<br>
+                    受付手続きをする画面
+                </div>
+            </div>
+            <div class="menu-card staff" onclick="showStaffScreen()">
+                <div class="menu-icon">💼</div>
+                <div class="menu-card-title">スタッフ画面</div>
+                <div class="menu-card-desc">
+                    受付データを確認・<br>
+                    管理する画面
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 受付画面 -->
+    <div class="reception-screen" id="receptionScreen">
+        <button class="back-button" onclick="showMenuScreen()">← メニューに戻る</button>
+        
+        <div class="container">
+            <div class="header">
+                <h1>🐾 動物病院受付</h1>
+                <p>こちらで受付手続きをお願いします</p>
+            </div>
+
+            <div class="form-container">
+                <div id="receptionFormContainer">
+                    <div id="receptionForm">
+                        <!-- 予約時間選択 -->
+                        <div class="form-group">
+                            <label>🕐 予約時間をお選びください <span class="required">*</span></label>
+                            
+                            <div id="morningSection">
+                                <div class="session-label">午前 (9:00 - 12:00)</div>
+                                <div class="time-slots" id="morningSlots"></div>
+                            </div>
+                            
+                            <div id="afternoonSection">
+                                <div class="session-label" style="margin-top: 30px;">午後 (16:30 - 18:30)</div>
+                                <div class="time-slots" id="afternoonSlots"></div>
+                            </div>
+                            
+                            <!-- 予約無しボタン -->
+                            <div class="time-slot no-reservation-btn" id="noReservationBtn">
+                                📅 予約なし（当日受付）
+                            </div>
+                            
+                            <div class="error-message" id="timeError"></div>
+                        </div>
+
+                        <!-- 飼い主名前 -->
+                        <div class="form-group">
+                            <label>👤 飼い主様のお名前（苗字のみ） <span class="required">*</span></label>
+                            <input type="text" id="ownerName" placeholder="例: やまだ" maxlength="20">
+                            <div class="error-message" id="ownerError"></div>
+                        </div>
+
+                        <!-- ペット名前 -->
+                        <div class="form-group">
+                            <label>🐕 ペットのお名前 <span class="required">*</span></label>
+                            <input type="text" id="petName" placeholder="例: ぽち" maxlength="20">
+                            <div class="error-message" id="petError"></div>
+                        </div>
+
+                        <!-- 診察券番号 -->
+                        <div class="form-group">
+                            <label>💳 診察券について <span class="required">*</span></label>
+                            <div class="card-number-section">
+                                <div class="card-buttons">
+                                    <div class="card-btn" id="hasCardBtn">
+                                        📋 診察券番号を入力
+                                    </div>
+                                    <div class="card-btn" id="unknownCardBtn">
+                                        ❓ 診察券番号不明
+                                    </div>
+                                    <div class="card-btn" id="newPatientBtn">
+                                        ✨ 初診（診察券なし）
+                                    </div>
+                                </div>
+                                
+                                <div class="card-input" id="cardNumberInput" style="display: none;">
+                                    <input type="number" id="cardNumber" placeholder="診察券番号を入力してください" min="1">
+                                    <div class="error-message" id="cardError"></div>
+                                </div>
+                                <div class="error-message" id="cardOptionError"></div>
+                            </div>
+                        </div>
+
+                        <!-- 保険証について -->
+                        <div class="form-group">
+                            <label>🏥 保険証について <span class="required">*</span></label>
+                            <div class="card-number-section">
+                                <div class="card-buttons">
+                                    <div class="card-btn" id="hasInsuranceBtn">
+                                        📄 保険証を保険証入れに入れた
+                                    </div>
+                                    <div class="card-btn" id="noInsuranceBtn">
+                                        ❌ 保険証なし・忘れた
+                                    </div>
+                                </div>
+                                <div class="error-message" id="insuranceOptionError"></div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="submit-btn" id="submitBtn">受付完了</button>
+                    </div>
+                    
+                    <div class="success-message" id="successMessage" style="display: none;">
+                        <div class="success-message-title" id="successMessageTitle">✅ 受付しました</div>
+                        <div>
+                            待合にてしばらくお待ちください。<br>
+                            お車で待たれる場合などは<br>
+                            必ずスタッフに声をかけて下さい。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スタッフ画面 -->
+    <div class="staff-screen" id="staffScreen">
+        <button class="back-button" onclick="showMenuScreen()">← メニューに戻る</button>
+        
+        <div class="staff-container">
+            <div class="staff-header">
+                <h1>🏥 受付データ管理画面</h1>
+                <div class="header-controls">
+                    <button class="btn btn-refresh" id="refreshBtn">🔄 更新</button>
+                    <button class="btn btn-clear" id="clearAllBtn">🗑️ 全削除</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">総受付数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todayCount">0</div>
+                    <div class="stat-label">本日の受付</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="insuranceCount">0</div>
+                    <div class="stat-label">保険証提出済</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="reservationCount">0</div>
+                    <div class="stat-label">予約あり</div>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label>日付:</label>
+                    <select id="dateFilter">
+                        <option value="all">すべて</option>
+                        <option value="today">本日</option>
+                        <option value="yesterday">昨日</option>
+                        <option value="week">過去7日間</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>時間帯:</label>
+                    <select id="timeFilter">
+                        <option value="all">すべて</option>
+                        <option value="morning">午前</option>
+                        <option value="afternoon">午後</option>
+                        <option value="no-reservation">予約なし</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>保険証:</label>
+                    <select id="insuranceFilter">
+                        <option value="all">すべて</option>
+                        <option value="hasInsurance">提出済</option>
+                        <option value="noInsurance">未提出</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>受付時刻</th>
+                                <th>予約時間</th>
+                                <th>飼い主名</th>
+                                <th>ペット名</th>
+                                <th>保険証</th>
+                                <th>診察券</th>
+                                <th>診察券番号</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">受付データがありません</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== グローバル変数 ==========
+        let selectedCardOption = '';
+        let selectedInsuranceOption = '';
+        let allData = [];
+        
+        // ========== 画面切り替え ==========
+        function showMenuScreen() {
+            document.getElementById('menuScreen').style.display = 'flex';
+            document.getElementById('receptionScreen').style.display = 'none';
+            document.getElementById('staffScreen').style.display = 'none';
+        }
+
+        function showReceptionScreen() {
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('receptionScreen').style.display = 'block';
+            document.getElementById('staffScreen').style.display = 'none';
+            initReceptionScreen();
+        }
+
+        function showStaffScreen() {
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('receptionScreen').style.display = 'none';
+            document.getElementById('staffScreen').style.display = 'block';
+            loadStaffData();
+        }
+
+        // ========== 受付画面の処理 ==========
+        
+        function initReceptionScreen() {
+            generateTimeSlots();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.onclick = handleSubmit;
+            }
+        }
+
+        function generateTimeSlots() {
+            const morningContainer = document.getElementById('morningSlots');
+            const afternoonContainer = document.getElementById('afternoonSlots');
+            const morningSection = document.getElementById('morningSection');
+            const afternoonSection = document.getElementById('afternoonSection');
+            
+            morningContainer.innerHTML = '';
+            afternoonContainer.innerHTML = '';
+            
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            const showMorning = currentHour < 15;
+            const showAfternoon = currentHour >= 15;
+            
+            if (showMorning) {
+                const morningSlots = [
+                    '9:00~9:30', '9:30~10:00', '10:00~10:30', 
+                    '10:30~11:00', '11:00~11:30', '11:30~12:00'
+                ];
+                
+                morningSlots.forEach(timeRange => {
+                    const startTime = timeRange.split('~')[0];
+                    const slot = createTimeSlot(timeRange, startTime);
+                    morningContainer.appendChild(slot);
+                });
+                
+                morningSection.style.display = 'block';
+            } else {
+                morningSection.style.display = 'none';
+            }
+            
+            if (showAfternoon) {
+                const afternoonSlots = [
+                    '16:30~17:00', '17:00~17:30', '17:30~18:00', '18:00~18:30'
+                ];
+                
+                afternoonSlots.forEach(timeRange => {
+                    const startTime = timeRange.split('~')[0];
+                    const slot = createTimeSlot(timeRange, startTime);
+                    afternoonContainer.appendChild(slot);
+                });
+                
+                afternoonSection.style.display = 'block';
+            } else {
+                afternoonSection.style.display = 'none';
+            }
+        }
+
+        function createTimeSlot(displayTime, actualTime) {
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            slot.textContent = displayTime;
+            slot.dataset.time = actualTime;
+            slot.dataset.display = displayTime;
+            
+            slot.onclick = function() {
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                clearError('timeError');
+            };
+            
+            return slot;
+        }
+
+        document.getElementById('noReservationBtn').addEventListener('click', function() {
+            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+            this.classList.add('selected');
+            clearError('timeError');
+        });
+
+        document.getElementById('hasInsuranceBtn').addEventListener('click', function() {
+            selectedInsuranceOption = 'hasInsurance';
+            document.querySelectorAll('#hasInsuranceBtn, #noInsuranceBtn').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            clearError('insuranceOptionError');
+        });
+
+        document.getElementById('noInsuranceBtn').addEventListener('click', function() {
+            selectedInsuranceOption = 'noInsurance';
+            document.querySelectorAll('#hasInsuranceBtn, #noInsuranceBtn').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            clearError('insuranceOptionError');
+        });
+        
+        document.getElementById('hasCardBtn').addEventListener('click', function() {
+            selectedCardOption = 'hasCard';
+            document.querySelectorAll('#hasCardBtn, #unknownCardBtn, #newPatientBtn').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('cardNumberInput').style.display = 'block';
+            clearError('cardOptionError');
+        });
+
+        document.getElementById('unknownCardBtn').addEventListener('click', function() {
+            selectedCardOption = 'unknown';
+            document.querySelectorAll('#hasCardBtn, #unknownCardBtn, #newPatientBtn').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('cardNumberInput').style.display = 'none';
+            clearError('cardOptionError');
+        });
+
+        document.getElementById('newPatientBtn').addEventListener('click', function() {
+            selectedCardOption = 'newPatient';
+            document.querySelectorAll('#hasCardBtn, #unknownCardBtn, #newPatientBtn').forEach(btn => btn.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('cardNumberInput').style.display = 'none';
+            clearError('cardOptionError');
+        });
+
+        function validateForm() {
+            let isValid = true;
+            
+            const selectedTime = document.querySelector('.time-slot.selected');
+            if (!selectedTime) {
+                showError('timeError', '予約時間または予約なしを選択してください');
+                isValid = false;
+            } else {
+                clearError('timeError');
+            }
+            
+            const ownerName = document.getElementById('ownerName').value.trim();
+            if (!ownerName) {
+                showError('ownerError', '飼い主様のお名前を入力してください');
+                isValid = false;
+            } else {
+                clearError('ownerError');
+            }
+            
+            const petName = document.getElementById('petName').value.trim();
+            if (!petName) {
+                showError('petError', 'ペットのお名前を入力してください');
+                isValid = false;
+            } else {
+                clearError('petError');
+            }
+            
+            if (selectedCardOption === 'hasCard') {
+                const cardNumber = document.getElementById('cardNumber').value.trim();
+                if (!cardNumber) {
+                    showError('cardError', '診察券番号を入力してください');
+                    isValid = false;
+                } else {
+                    clearError('cardError');
+                }
+            } else if (!selectedCardOption) {
+                showError('cardOptionError', '診察券についてお選びください');
+                isValid = false;
+            } else {
+                clearError('cardOptionError');
+                clearError('cardError');
+            }
+            
+            if (!selectedInsuranceOption) {
+                showError('insuranceOptionError', '保険証についてお選びください');
+                isValid = false;
+            } else {
+                clearError('insuranceOptionError');
+            }
+            
+            return isValid;
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            if (el) el.textContent = message;
+        }
+
+        function clearError(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) el.textContent = '';
+        }
+
+        function handleSubmit() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            const selectedTimeElement = document.querySelector('.time-slot.selected');
+            const formData = {
+                id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                selectedTime: selectedTimeElement.dataset.time || 'no-reservation',
+                selectedTimeDisplay: selectedTimeElement.dataset.display || selectedTimeElement.textContent || '予約なし（当日受付）',
+                ownerName: document.getElementById('ownerName').value.trim(),
+                petName: document.getElementById('petName').value.trim(),
+                insuranceOption: selectedInsuranceOption,
+                cardOption: selectedCardOption,
+                cardNumber: selectedCardOption === 'hasCard' ? document.getElementById('cardNumber').value.trim() : '',
+                receptionTime: new Date().toLocaleString('ja-JP'),
+                timestamp: new Date().toISOString()
+            };
+            
+            saveReceptionData(formData);
+            
+            document.getElementById('successMessageTitle').textContent = 
+                `✅ ${formData.ownerName} ${formData.petName}ちゃんの受付が完了しました`;
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('receptionForm').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('successMessage').style.display = 'none';
+                document.getElementById('receptionForm').style.display = 'block';
+                
+                document.getElementById('ownerName').value = '';
+                document.getElementById('petName').value = '';
+                document.getElementById('cardNumber').value = '';
+                
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                document.querySelectorAll('.card-btn').forEach(btn => btn.classList.remove('selected'));
+                selectedCardOption = '';
+                selectedInsuranceOption = '';
+                document.getElementById('cardNumberInput').style.display = 'none';
+                
+                clearError('timeError');
+                clearError('ownerError');
+                clearError('petError');
+                clearError('cardError');
+                clearError('cardOptionError');
+                clearError('insuranceOptionError');
+            }, 5000);
+        }
+
+        function saveReceptionData(data) {
+            let allData = JSON.parse(localStorage.getItem('receptionData') || '[]');
+            allData.push(data);
+            localStorage.setItem('receptionData', JSON.stringify(allData));
+        }
+
+        // ========== スタッフ画面の処理 ==========
+        
+        function loadStaffData() {
+            const stored = localStorage.getItem('receptionData');
+            allData = stored ? JSON.parse(stored) : [];
+            
+            allData = allData.map((item, index) => {
+                if (!item.id) {
+                    item.id = `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                }
+                return item;
+            });
+            
+            localStorage.setItem('receptionData', JSON.stringify(allData));
+            
+            updateStats();
+            applyFilters();
+        }
+
+        function updateStats() {
+            const today = new Date().toLocaleDateString('ja-JP');
+            const todayData = allData.filter(item => {
+                const itemDate = new Date(item.timestamp).toLocaleDateString('ja-JP');
+                return itemDate === today;
+            });
+
+            document.getElementById('totalCount').textContent = allData.length;
+            document.getElementById('todayCount').textContent = todayData.length;
+            document.getElementById('insuranceCount').textContent = 
+                allData.filter(item => item.insuranceOption === 'hasInsurance').length;
+            document.getElementById('reservationCount').textContent = 
+                allData.filter(item => item.selectedTime !== 'no-reservation').length;
+        }
+
+        function applyFilters() {
+            const dateFilter = document.getElementById('dateFilter').value;
+            const timeFilter = document.getElementById('timeFilter').value;
+            const insuranceFilter = document.getElementById('insuranceFilter').value;
+
+            let filteredData = [...allData];
+
+            if (dateFilter !== 'all') {
+                const now = new Date();
+                filteredData = filteredData.filter(item => {
+                    const itemDate = new Date(item.timestamp);
+                    
+                    if (dateFilter === 'today') {
+                        return itemDate.toLocaleDateString() === now.toLocaleDateString();
+                    } else if (dateFilter === 'yesterday') {
+                        const yesterday = new Date(now);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return itemDate.toLocaleDateString() === yesterday.toLocaleDateString();
+                    } else if (dateFilter === 'week') {
+                        const weekAgo = new Date(now);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        return itemDate >= weekAgo;
+                    }
+                    return true;
+                });
+            }
+
+            if (timeFilter !== 'all') {
+                filteredData = filteredData.filter(item => {
+                    if (timeFilter === 'no-reservation') {
+                        return item.selectedTime === 'no-reservation';
+                    } else if (timeFilter === 'morning') {
+                        return item.selectedTime !== 'no-reservation' && parseInt(item.selectedTime.split(':')[0]) < 12;
+                    } else if (timeFilter === 'afternoon') {
+                        return item.selectedTime !== 'no-reservation' && parseInt(item.selectedTime.split(':')[0]) >= 16;
+                    }
+                    return true;
+                });
+            }
+
+            if (insuranceFilter !== 'all') {
+                filteredData = filteredData.filter(item => item.insuranceOption === insuranceFilter);
+            }
+
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!tbody) return;
+
+            if (data.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyState) emptyState.style.display = 'block';
+                return;
+            }
+
+            if (emptyState) emptyState.style.display = 'none';
+            tbody.innerHTML = '';
+
+            data.forEach((item) => {
+                const timeClass = item.selectedTime === 'no-reservation' ? 'badge-no-reservation' :
+                                 parseInt(item.selectedTime.split(':')[0]) < 12 ? 'badge-morning' : 'badge-afternoon';
+                
+                const insuranceClass = item.insuranceOption === 'hasInsurance' ? 'badge-insurance-yes' : 'badge-insurance-no';
+                const insuranceText = item.insuranceOption === 'hasInsurance' ? '✓ 提出済' : '✗ 未提出';
+
+                const cardText = item.cardOption === 'hasCard' ? '入力済' :
+                                item.cardOption === 'unknown' ? '番号不明' : '初診';
+
+                const tr = document.createElement('tr');
+                
+                const cells = [
+                    item.receptionTime || '',
+                    `<span class="badge ${timeClass}">${item.selectedTimeDisplay || ''}</span>`,
+                    `<strong>${item.ownerName || ''}</strong>`,
+                    item.petName || '',
+                    `<span class="badge ${insuranceClass}">${insuranceText}</span>`,
+                    `<span class="badge badge-card">${cardText}</span>`,
+                    item.cardNumber || '-'
+                ];
+                
+                cells.forEach(content => {
+                    const td = document.createElement('td');
+                    td.innerHTML = content;
+                    tr.appendChild(td);
+                });
+                
+                const actionTd = document.createElement('td');
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '完了';
+                deleteBtn.onclick = function() {
+                    removeItemByID(item.id);
+                };
+                
+                actionTd.appendChild(deleteBtn);
+                tr.appendChild(actionTd);
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        function removeItemByID(id) {
+            allData = allData.filter(item => item.id !== id);
+            localStorage.setItem('receptionData', JSON.stringify(allData));
+            updateStats();
+            applyFilters();
+        }
+
+        function clearAllData() {
+            localStorage.removeItem('receptionData');
+            allData = [];
+            updateStats();
+            applyFilters();
+        }
+
+        document.getElementById('refreshBtn').onclick = loadStaffData;
+        document.getElementById('clearAllBtn').onclick = clearAllData;
+        document.getElementById('dateFilter').onchange = applyFilters;
+        document.getElementById('timeFilter').onchange = applyFilters;
+        document.getElementById('insuranceFilter').onchange = applyFilters;
+    </script>
+</body>
+</html>
